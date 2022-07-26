@@ -8,6 +8,7 @@ import max_functions as mf
 
 
 def main():
+  
     # st.header() c'est le titre pour la page streamlit
     st.title("LEAD TIME, FTE and COST ESTIMATION")
 
