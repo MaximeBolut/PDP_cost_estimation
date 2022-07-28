@@ -10,7 +10,7 @@ import max_functions as mf
 def main():
   
     # st.header() c'est le titre pour la page streamlit
-    st.title("LEAD TIME, FTE and COST ESTIMATION")
+    st.title("Capture of process owner knowhow (lead time, cost, FTE)")
 
     # Get the list of sheet in the excel doc (each sheet = one model)
     xl = pd.ExcelFile("PDP Surrogate Testing.xlsx")
@@ -18,7 +18,7 @@ def main():
 
     # Make it a droplist to select from (with streamlit)
     sheet_selected = st.selectbox(
-        'Select a model to do the estimate:',
+        'Select process deliverable:',
         (sheet))
     #st.write('You selected:', sheet_selected)
 
@@ -29,7 +29,7 @@ def main():
 
     # selection du niveau de convergence (on veut un int, 0 pr CL1, 1 pr CL2 etc...)
     # st.radio c'est les boutons pour l'affichage de streamlit
-    conv = ['CL1', 'CL2', 'CL3', 'CL4']
+    conv = ['CL0', 'CL1', 'CL2', 'CL3']
     convergence = st.radio(
         "choose the convergence level: ",
         (conv))
@@ -47,10 +47,10 @@ def main():
     factor = selected_conv/nominal
     res = factor*np.array(df.iloc[14:16, complexity+2])
 
-    st.header("Resulting estimation")
+    st.header("Capture process owner estimation")
 
-    st.write("Estimated lead time (weeks): ", res[0])
-    st.write(" Estimated number of FTE:", res[1])
+    st.write("Estimated lead time: ", res[0])
+    st.write(" Estimated FTE:", res[1])
 
     # From the estimated FTE we can find the estimated cost
     # fte is the line with the FTEcost
@@ -64,11 +64,11 @@ def main():
     # We print the corresponding cost with the detail
     cost = df.iloc[19:24, [1, col]]
     st.write(
-        "The cost estimate for the closest corresponding number of estimated FTE is as follow: ")
+        "Estimated fix cost: ")
     st.table(cost)  # static table but nicer visually
     # st.dataframe(cost)  # column can be sorted in ascending or descending order
 
-    st.header("Actual number of FTE available and its impact on cost and lead time")
+    st.header("Capture influence of FTE for lead-time & fixed cost (e.g. licences, trainingss...)")
     actual_fte = st.number_input('Enter the actual Number of FTE available :', min_value=1,
                                  max_value=300, value=5, step=1)
 
@@ -79,7 +79,7 @@ def main():
     # We print the corresponding cost with the detail
     cost = df.iloc[19:24, [1, col]]
     st.write(
-        "The cost estimate for the closest corresponding number of actual FTE is as follow: ")
+        "Estimated fix cost: ")
     st.table(cost)  # static table but nicer visually
     # st.dataframe(cost)  # column can be sorted in ascending or descending order
 
@@ -91,6 +91,52 @@ def main():
     leadtime_impact_factor = df.iloc[28:34, 2]/nominal
     st.write("Lead time will be:",
              (leadtime_impact_factor.iloc[leadtime_impact_index])*res[0])
+
+
+    from fpdf import FPDF
+    import base64
+
+    st.header("Exporting result")
+    
+    report_text = st.text_input("Name the report and export it as PDF") 
+
+    export_as_pdf = st.button("Export Report")
+    
+    def create_download_link(val, filename):
+        b64 = base64.b64encode(val)  # val looks like b'...'
+        return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
+    
+    if export_as_pdf:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(200, 10, report_text, 0, 1, 'C')
+        pdf.cell(40, 10, "Model: "+str(sheet_selected), 0, 0, 'L')
+        pdf.ln(10)
+        pdf.cell(40, 10, "Convergence selected: "+str(conv[convergence]), 0, 0, 'L')
+        pdf.ln(10)
+        pdf.cell(40, 10, "Complexity selected: "+str(cplx[complexity]), 0, 0, 'L')
+        pdf.ln(20)
+        pdf.cell(60, 10, 'Estimated lead time: '+str(res[0]), 0, 0, 'L')
+        pdf.ln(10)
+        pdf.cell(60, 10, 'Estimated FTE: '+str(res[1]), 0, 0, 'L')
+        #pdf.cell(40, 10, cost, 0, 1, 'C')
+       
+        #pdf.cell(40, 10, "Estimated lead time: ", res[0])
+        #pdf.cell(40, 10, "Estimated FTE:", res[1])
+        #pdf.cell(40, 10,"Estimated fix cost", st.table(cost))
+    
+        html = create_download_link(pdf.output(dest="S").encode("latin-1"), report_text)
+    
+        st.markdown(html, unsafe_allow_html=True)
+
+
+
+
+
+
+
+
 
 
 # boot code pour lancer automatiquement streamlit (sinon faut faire dans un terminal: streamlit run 'mon_pgm.py')
