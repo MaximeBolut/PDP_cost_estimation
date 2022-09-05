@@ -1,5 +1,5 @@
 import sys
-from streamlit import cli as stcli
+#from streamlit import cli as stcli
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -143,6 +143,6 @@ def main():
 if __name__ == '__main__':
     if st._is_running_with_streamlit:
         main()
-    else:
-        sys.argv = ["streamlit", "run", sys.argv[0]]
-        sys.exit(stcli.main())
+    #else:
+    #    sys.argv = ["streamlit", "run", sys.argv[0]]
+    #    sys.exit(stcli.main())
